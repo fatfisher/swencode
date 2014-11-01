@@ -24,13 +24,13 @@ function swdecode($s){
 
 //================================= 第1种encode、decode方式 ==============================================
 //直接将字符翻译成hex。适合ASCII字符，中文好像也可以。
-//前面附加1字符表示编码方式。编码方式（0:unknow;1:UTF-8;2:GBK;3:ISO8859-1）这个没用了。
+//前面附加1字符表示编码方式。编码方式（0:unknow;1:UTF-8;2:GBK;3:ISO8859-1）
 //结果："abc中文"-->"616263E4B8ADE69687"(1:UTF-8)-->"abc中文"  （php不分中文编码方式，只按照byte(char)转换成Hex串）
 function _swc_char2hexstr($c){return dechex(ord($c));} 		//字符转换成16进制串
 function _swc_hexstr2char($hex){return chr(hexdec($hex));} 	//16进制串转换成字符
 function _swc_string2hexstr($s){for($i=0;$i<strlen($s);$i++){$r=$r._swc_char2hexstr(substr($s,$i,1));}return $r;} 			//将字符串转换成16进制串
 function _swc_hexstr2string($s){for($i=1;$i*2<=strlen($s);$i++){$r=$r._swc_hexstr2char(substr($s,($i-1)*2,2));}return $r;} 	//将16进制串转换成字符串
-//encode方式1。前面附加一个字符，表示中文的编码方式。缺省中文编码方式1:UTF-8。这个没用了。
+//encode方式1。前面附加一个字符，表示中文的编码方式。缺省中文编码方式1:UTF-8。
 //其实php里面不分这个，照byte（也就是char）编码。GBK也同样编码过去。
 function _swc_encode1($s){return _swc_string2hexstr($s);} 
 //decode方式1。要去掉第一个字符（编码方式）。
