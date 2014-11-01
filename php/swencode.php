@@ -83,14 +83,14 @@ function sw_authcode($string, $operation = 'DECODE', $key = '', $expiry = 0) {
  */
 
 function sw_urlcode($s, $operation = 'DECODE', $method=1, $key = '', $expiry = 0){
-	if($operation == 'DECODE')return sw_decode($s);
-	if($operation == 'ENCODE')return sw_encode($s, $method);
+	if($operation == 'DECODE')return swdecode($s);
+	if($operation == 'ENCODE')return swencode($s, $method);
 }
 function sw_urlencode($s, $method=1, $key = '', $expiry = 0){
-	return sw_encode($s, $method);
+	return swencode($s, $method);
 }
 function sw_urldecode($s, $method=1, $key = '', $expiry = 0){
-	return sw_decode($s);
+	return swdecode($s);
 }
 //思路：如果一个字符串被认定是encode，则开始解码。
 //首先从字符串中获得解码需要的key。通过两步实现。截取字符串的第2个字符，它的大小表示key有几个字符。
@@ -98,72 +98,74 @@ function sw_urldecode($s, $method=1, $key = '', $expiry = 0){
 //第1个字符表示什么意思呢？表示encode和decode的方法。
 //暂且将这种方法定为方式1。
 
-function sw_encode($s,$method=1){
-	if($method==2)return "2".encode2($s); //附加一个字符，表示encode方式。
-	else return "1".encode1($s); //缺省使用第一种encode方式。
+function swencode($s,$method=1){
+	if($method==2)return "swstr2"._sw_encode2($s); 	//附加一个字符，表示encode方式。
+	else return "swstr1"._sw_encode1($s); 			//缺省使用第一种encode方式。
 }
-function sw_decode($s){
-	$method=get_method_id($s);$str_encode=get_encode_str($s);
-	if($method==1)return decode1($str_encode);
-	elseif($method==2)return decode2($str_encode);
-	else return decode1($str_encode); //缺省使用decode方式1。
+function swdecode($s){
+	if(!(strtolower(substr($s,0,5))=="swstr")) return;		//如果前5个字符不是swstr，说明不是swstr编码
+	$method = substr($s,5,1);		//获取编码方式
+	$str_encode = _substr($s,6);	//获取编码后的字符串
+	if($method==1)return _sw_decode1($str_encode);
+	elseif($method==2)return _sw_decode2($str_encode);
+	else return; 					//如果没有相应的编码方式，返回空。
 }
 
 //===================================================================================================
 //获取字符串的encode、decode方式（即取字符串的第一个字符）
-function get_method_id($s){return substr($s,0,1);}
+//function _sw_get_method_id($s){return substr($s,0,1);}
 //获得编码的字符串
-function get_encode_str($s){return substr($s,1);}
+//function _sw_get_encode_str($s){return substr($s,1);}
 
 
 //================================= 第1种encode、decode方式 ==============================================
 //直接将字符翻译成hex。适合ASCII字符，中文好像也可以。
 //前面附加1字符表示编码方式。编码方式（0:unknow;1:UTF-8;2:GBK;3:ISO8859-1）
 //结果："abc中文"-->"616263E4B8ADE69687"(1:UTF-8)-->"abc中文"  （php不分中文编码方式，只按照byte(char)转换成Hex串）
-function char2hexstr($c){return dechex(ord($c));} //字符转换成16进制串
-function hexstr2char($hex){return chr(hexdec($hex));} //16进制串转换成字符
-function string2hexstr($s){for($i=0;$i<strlen($s);$i++){$r=$r.char2hexstr(substr($s,$i,1));}return $r;} //将字符串转换成16进制串
-function hexstr2string($s){for($i=1;$i*2<=strlen($s);$i++){$r=$r.hexstr2char(substr($s,($i-1)*2,2));}return $r;} //将16进制串转换成字符串
+function _sw_char2hexstr($c){return dechex(ord($c));} 		//字符转换成16进制串
+function _sw_hexstr2char($hex){return chr(hexdec($hex));} 	//16进制串转换成字符
+function _sw_string2hexstr($s){for($i=0;$i<strlen($s);$i++){$r=$r._sw_char2hexstr(substr($s,$i,1));}return $r;} 			//将字符串转换成16进制串
+function _sw_hexstr2string($s){for($i=1;$i*2<=strlen($s);$i++){$r=$r._sw_hexstr2char(substr($s,($i-1)*2,2));}return $r;} 	//将16进制串转换成字符串
 //encode方式1。前面附加一个字符，表示中文的编码方式。缺省中文编码方式1:UTF-8。
 //其实php里面不分这个，照byte（也就是char）编码。GBK也同样编码过去。
-function encode1($s){return "1".string2hexstr($s);} 
+function _sw_encode1($s){return "1"._sw_string2hexstr($s);} 
 //decode方式1。要去掉第一个字符（编码方式）。
-function decode1($s){return hexstr2string(substr($s,1));} 
+function _sw_decode1($s){return _sw_hexstr2string(substr($s,1));} 
 
 
 //================================= 第2种encode、decode方式 ==============================================
 //在第一种方式的基础上。每个字符hex用分隔符"-"分开，便于解码识别。不适用中文。
 //结果："abc中文"-->"-61-62-63-d6-d0-ce-c4"-->"abc中文"
-function get_encode_str2($s){return substr($s,1);} //获得编码的字符串
-//function char2hexstr($c){return dechex(ord($c));} //字符转换成16进制串
+function _sw_get_encode_str2($s){return substr($s,1);} 	//获得编码的字符串
+//function char2hexstr($c){return dechex(ord($c));} 	//字符转换成16进制串
 //function hexstr2char($hex){return chr(hexdec($hex));} //16进制串转换成字符
-function string2hexstr2($s){for($i=0;$i<strlen($s);$i++){$r=$r."-".char2hexstr(substr($s,$i,1));}return $r;} //将字符串转换成16进制串
-function hexstr2string2($s){$s=str_replace("-","",$s);for($i=1;$i*2<=strlen($s);$i++){$r=$r.hexstr2char(substr($s,($i-1)*2,2));}return $r;} //将16进制串转换成字符串
-function encode2($s){return "2".string2hexstr2($s);} //encode方式2
-function decode2($s){return hexstr2string2($s);} //decode方式2
+function _sw_string2hexstr2($s){for($i=0;$i<strlen($s);$i++){$r=$r."-"._sw_char2hexstr(substr($s,$i,1));}return $r;} //将字符串转换成16进制串
+function _sw_hexstr2string2($s){$s=str_replace("-","",$s);for($i=1;$i*2<=strlen($s);$i++){$r=$r._sw_hexstr2char(substr($s,($i-1)*2,2));}return $r;} //将16进制串转换成字符串
+function _sw_encode2($s){return "2"._sw_string2hexstr2($s);} 	//encode方式2
+function _sw_decode2($s){return _sw_hexstr2string2($s);} 		//decode方式2
 
 
 //================================= 第3种encode、decode方式 ==============================================
 //还没想好。
 //结果："abc中文"-->
-function get_keylength($s){return substr($s,1,1);} //获得密钥字符串长度
-function get_key($s){return substr($s,2,get_keylength($s));} //获得密钥
+function _sw_get_keylength($s){return substr($s,0,1);} 					//获得密钥字符串长度
+function _sw_get_key($s){return substr($s,1,_sw_get_keylength($s));} 	//获得密钥
 //function get_encode_str2($s){return substr($s,2+get_keylength($s));} //获得编码的字符串
 
 
 
 
 
+//==== 使用说明 ===========================================
+//include "swincode.php";
+//$ss = swencode($s,1);		//将字符串$s以第一种编码方式编码。
+//$sss = swdecode($ss);		//解码字符串$ss
+
 
 //==== 测试 ===========================================
-//$s="abc中文";
-//$ss=encode($s,1);
-//$sss=decode($ss);
-//echo $ss."||".$sss;
-//$s="ab:ab=0,cd=1,cee;";
-//$ss=get_cmdname($s);
-//$sss=get_parvalue($s,"cee");
-//if (has_parname($s,"cee"))$sss="ok";
-//echo $s."||".$ss."||".$sss;
+//$s = "abc中文";
+//$ss = swencode($s,1);
+//$sss = swdecode($ss);
+//echo $s."<br /><br />".$ss."<br /><br />".$sss;
 
 ?>
