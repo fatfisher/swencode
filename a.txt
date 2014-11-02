@@ -1,0 +1,53 @@
+
+Git使用-常用命令
+
+http://zhan.renren.com/ilinux?gid=3602888498002772512&checked=true
+
+**克隆版本库
+> cd code
+> git clone git@github.com:fjtianxia/qianxudetianxia.git
+  //该命令会在code文件夹下创建qianxudetianxia文件夹，作为远程版本库的一个本地拷贝
+  //如果你不想看到生成的文件夹是qianxudetianxia，只要在上面命令后加上另外的名字即可
+  //下面则是在本地生成test目录，作为远程版本库的一个本地拷贝
+> git clone git@github.com:fjtianxia/qianxudetianxia.git test
+
+  //我在下载android源码也用到了git clone命令，如下：
+>git clone git://android.git.kernel.org/platform/frameworks/base.git android-sdk-source
+
+**添加文件
+git中存放代码的地方有三个，第一个是工作目录树，也就是我们看到的代码文件夹；第二是暂存区，是本地中和远程版本库的一个缓冲区域，暂存区一般存放的是本地准备要提交到远程版本库的修改；第三个是远程版本库。
+git add命令是把工作目录树中的修改添加到暂存区。
+> cd qianxudetianxia/
+> touch test.txt //创建test.txt文件
+> git add test.txt //添加到本地版本库
+> touch a.txt b.txt //创建多个文件
+> git add . //提交当前文件夹的增加项到本地版本库
+添加成功后，我们用git status命令来查看以下当前工作目录树的状态：
+
+**提交到本地版本库
+git commit是提交命令，把修改提交到本地版本库中
+-m参数，添加说明文字
+> git commit -m 'add the three new file'
+
+**合并到远程版本库
+//把本地分支master的修改合并到远程版本库origin中(的远程分支master)
+> git push origin master
+
+**查看分支
+>git branch -a
+ //输出如下，其中master是本地分支，origin是远程版本库的别名
+* master
+   remotes/origin/HEAD -> origin/master
+   remotes/origin/master
+
+
+
+
+
+
+
+
+
+
+
+
